@@ -1,1 +1,6 @@
 sudo sysctl -w vm.max_map_count=262144
+docker-compose up
+
+Things to do tomorrow
+- Finish off tags endpoint
+- Add articles container to docker-compose.yml
