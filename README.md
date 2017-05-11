@@ -21,8 +21,8 @@ Go was selected as the language of choice because:
 The framework choice is Gin, because I wanted a router but something leaner than
 a full framework like beego. Gin seems to fit both these categories.
 
-The data store selected was elasticsearch. I would never use elasticsearch as a
-data store in a production system but since this a technical exam I wanted
+The data store selected was elasticsearch. I would never use elasticsearch as the
+only data store in a production system but since this a technical exam I wanted
 to have some fun, plus elasticsearch is cool. For these endpoints, elasticsearch
 offers no benefits over a SQL data store.
 
