@@ -27,6 +27,11 @@
 			"Rev": "fc9e8d8ef48496124e79ae0df75490096eccf6fe"
 		},
 		{
+			"ImportPath": "github.com/pkg/errors",
+			"Comment": "v0.8.0-5-gc605e28",
+			"Rev": "c605e284fe17294bda444b34710735b29d1a9d90"
+		},
+		{
 			"ImportPath": "golang.org/x/net/context",
 			"Rev": "feeb485667d1fdabe727840fe00adc22431bc86e"
 		},
@@ -43,6 +48,16 @@
 			"ImportPath": "gopkg.in/go-playground/validator.v8",
 			"Comment": "v8.18.1",
 			"Rev": "5f57d2222ad794d0dffb07e664ea05e2ee07d60c"
+		},
+		{
+			"ImportPath": "gopkg.in/olivere/elastic.v5",
+			"Comment": "v5.0.37",
+			"Rev": "d401c698bf1e0f5f6c13a5388a79967f095836be"
+		},
+		{
+			"ImportPath": "gopkg.in/olivere/elastic.v5/uritemplates",
+			"Comment": "v5.0.37",
+			"Rev": "d401c698bf1e0f5f6c13a5388a79967f095836be"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",

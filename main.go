@@ -1,37 +1,37 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"golang.org/x/net/context"
 	"gopkg.in/gin-gonic/gin.v1"
 	elastic "gopkg.in/olivere/elastic.v5"
-	"os"
-	"golang.org/x/net/context"
 	"net/http"
-	"fmt"
-	"time"
-	"encoding/json"
+	"os"
 	"reflect"
+	"time"
 )
 
 var (
-	client *elastic.Client
+	client  *elastic.Client
 	errConn error
-	ctx context.Context
+	ctx     context.Context
 )
 
 const (
-	Index = "articles"
-	Type = "article"
-	DateForm = "2006-01-02"
+	Index         = "articles"
+	Type          = "article"
+	DateForm      = "2006-01-02"
 	DateShortForm = "20060102"
 	DatePrintForm = "2006-01-02"
 )
 
 type ArticleView struct {
-	Id    string    `json:"id,omitempty"`
-	Title string    `json:"title,omitempty"`
-	Date  string 	`json:"date,omitempty"`
-	Body  string    `json:"body,omitempty"`
-	Tags  []string  `json:"tags,omitempty"`
+	Id    string   `json:"id,omitempty"`
+	Title string   `json:"title,omitempty"`
+	Date  string   `json:"date,omitempty"`
+	Body  string   `json:"body,omitempty"`
+	Tags  []string `json:"tags,omitempty"`
 }
 
 type ArticleSanitized struct {
@@ -49,15 +49,13 @@ type Tag struct {
 	RelatedTags []string `json:"related_tags,omitempty""`
 }
 
-
-func insertArticle(article ArticleSanitized) (error) {
+func insertArticle(article ArticleSanitized) error {
 	_, err := client.Index().
 		Index(Index).
 		Type(Type).
 		Id(article.Id).
 		BodyJson(article).
 		Do(ctx)
-
 
 	return err
 }
@@ -110,7 +108,7 @@ func fetchTag(tag string, timestamp time.Time) (int, Tag) {
 	var relatedTags []string
 	for _, item := range searchResult.Each(reflect.TypeOf(article)) {
 		if a, ok := item.(ArticleSanitized); ok {
-			fmt.Printf("Title: %s Id: %s Tags: %v\n", a.Title, a.Id, a.Tags);
+			fmt.Printf("Title: %s Id: %s Tags: %v\n", a.Title, a.Id, a.Tags)
 			for _, t := range a.Tags {
 				fmt.Println(t + " " + tag)
 
@@ -126,9 +124,9 @@ func fetchTag(tag string, timestamp time.Time) (int, Tag) {
 	}
 
 	return 200, Tag{
-		Tag: tag,
-		Count:count,
-		Articles: ids,
+		Tag:         tag,
+		Count:       count,
+		Articles:    ids,
 		RelatedTags: relatedTags,
 	}
 }
@@ -150,10 +148,10 @@ func articleCreate(c *gin.Context) {
 		tc, _ := time.Parse(DateForm, json.Date)
 
 		article := ArticleSanitized{
-			Id: json.Id,
+			Id:    json.Id,
 			Title: json.Title,
-			Date: tc,
-			Tags: json.Tags,
+			Date:  tc,
+			Tags:  json.Tags,
 		}
 
 		err := insertArticle(article)
@@ -186,10 +184,10 @@ func articleShow(c *gin.Context) {
 	tc := result.Date.Format(DatePrintForm)
 
 	article := ArticleView{
-		Id: result.Id,
+		Id:    result.Id,
 		Title: result.Title,
-		Date: tc,
-		Tags: result.Tags,
+		Date:  tc,
+		Tags:  result.Tags,
 	}
 
 	c.JSON(status, article)
