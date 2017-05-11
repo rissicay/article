@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 	"encoding/json"
+	"reflect"
 )
 
 var (
@@ -22,6 +23,7 @@ const (
 	Type = "article"
 	DateForm = "2006-01-02"
 	DateShortForm = "20060102"
+	DatePrintForm = "2006-01-02"
 )
 
 type ArticleView struct {
@@ -43,8 +45,8 @@ type ArticleSanitized struct {
 type Tag struct {
 	Tag         string   `json:"tag"`
 	Count       int      `json:"count"`
-	Articles    []string `json:"article"`
-	RelatedTags []string `json:"related_tags"`
+	Articles    []string `json:"article,omitempty"`
+	RelatedTags []string `json:"related_tags,omitempty""`
 }
 
 
@@ -60,7 +62,7 @@ func insertArticle(article ArticleSanitized) (error) {
 	return err
 }
 
-func fetchArticle(id string) (int, ArticleView) {
+func fetchArticle(id string) (int, ArticleSanitized) {
 
 	result, err := client.Get().
 		Index(Index).
@@ -70,11 +72,11 @@ func fetchArticle(id string) (int, ArticleView) {
 		Do(ctx)
 
 	if err != nil {
-		return 500, ArticleView{}
+		return 500, ArticleSanitized{}
 	}
 
 	if result.Found {
-		var article ArticleView
+		var article ArticleSanitized
 
 		err = json.Unmarshal(*result.Source, &article)
 
@@ -82,12 +84,62 @@ func fetchArticle(id string) (int, ArticleView) {
 			return 200, article
 		} else {
 			fmt.Println(err.Error())
-			return 500, ArticleView{}
+			return 500, ArticleSanitized{}
 		}
 
 	} else {
-		return 404, ArticleView{}
+		return 404, ArticleSanitized{}
 	}
+}
+
+func fetchTag(tag string, timestamp time.Time) (int, Tag) {
+	query := elastic.NewBoolQuery().Must(elastic.NewTermQuery("Date", timestamp)).Must(elastic.NewTermQuery("Tags", tag))
+	searchResult, err := client.Search().
+		Index(Index).
+		Query(query).
+		Do(ctx)
+
+	if err != nil {
+		return 500, Tag{}
+	}
+
+	var article ArticleSanitized
+
+	count := 0
+	var ids []string
+	var relatedTags []string
+	for _, item := range searchResult.Each(reflect.TypeOf(article)) {
+		if a, ok := item.(ArticleSanitized); ok {
+			fmt.Printf("Title: %s Id: %s Tags: %v\n", a.Title, a.Id, a.Tags);
+			for _, t := range a.Tags {
+				fmt.Println(t + " " + tag)
+
+				if !stringInSlice(t, relatedTags) && t != tag {
+					fmt.Println("APPENDING")
+					relatedTags = append(relatedTags, t)
+				}
+			}
+
+			ids = append(ids, a.Id)
+			count++
+		}
+	}
+
+	return 200, Tag{
+		Tag: tag,
+		Count:count,
+		Articles: ids,
+		RelatedTags: relatedTags,
+	}
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
 
 func articleCreate(c *gin.Context) {
@@ -131,14 +183,26 @@ func articleShow(c *gin.Context) {
 
 	status, result := fetchArticle(id)
 
-	c.JSON(status, result)
+	tc := result.Date.Format(DatePrintForm)
+
+	article := ArticleView{
+		Id: result.Id,
+		Title: result.Title,
+		Date: tc,
+		Tags: result.Tags,
+	}
+
+	c.JSON(status, article)
 
 }
 
 func tagShow(c *gin.Context) {
-	/*tag := c.Param("tag")
-	tc, _ := time.Parse(DateShortForm, c.Param("date"))*/
+	tag := c.Param("tagName")
+	tc, _ := time.Parse(DateShortForm, c.Param("date"))
 
+	status, result := fetchTag(tag, tc)
+
+	c.JSON(status, result)
 }
 
 func main() {
@@ -160,14 +224,14 @@ func main() {
 
 	exists, err := client.IndexExists("articles").Do(context.Background())
 
-	if (err != nil) {
+	if err != nil {
 		panic(err)
 	}
 
 	if !exists {
 		// Creating the index
 		_, err := client.CreateIndex("articles").Do(ctx)
-		if (err != nil) {
+		if err != nil {
 			panic(err)
 		}
 	}
