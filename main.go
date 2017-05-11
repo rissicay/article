@@ -108,12 +108,10 @@ func fetchTag(tag string, timestamp time.Time) (int, Tag) {
 	var relatedTags []string
 	for _, item := range searchResult.Each(reflect.TypeOf(article)) {
 		if a, ok := item.(ArticleSanitized); ok {
-			fmt.Printf("Title: %s Id: %s Tags: %v\n", a.Title, a.Id, a.Tags)
 			for _, t := range a.Tags {
 				fmt.Println(t + " " + tag)
 
 				if !stringInSlice(t, relatedTags) && t != tag {
-					fmt.Println("APPENDING")
 					relatedTags = append(relatedTags, t)
 				}
 			}
